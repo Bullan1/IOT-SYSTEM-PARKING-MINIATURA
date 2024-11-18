@@ -15,6 +15,11 @@ Además, con fines de entretenimiento e incluso en un futuro para implementarlo 
 **Circuito Propuesto**
 ![circuito](https://github.com/user-attachments/assets/9f4998ab-e271-448b-9921-cf699e0fe077)
 
+**Circuito Con Arduino**
+
+![conexion](https://github.com/user-attachments/assets/c13dc581-31ef-49db-8866-daa1f094bc5f)
+
+
 **Imagen Principal de WEB**
 ![image](https://github.com/user-attachments/assets/f2d5d541-0f68-4046-a49b-4abcd9d581d7)
 
