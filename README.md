@@ -1,5 +1,6 @@
 **INTEGRANTES : JOEL FERRADA - DANIEL RAVELO**
 **PROYECTO: PARKING SYSTEM MINIATURA - IOT**
+
 Nuestro proyecto se basa en un sistema de estacionamiento donde nos mostrará en una pantalla cuantos espacios de estacionamiento están disponibles, 
 pasando por una barrera que se va a abrir mediante un sensor que detecta un sonido, y encenderá una ampolleta para asignar que está abierta. 
 Y con diodos led definir cuales están ocupados. Además, se mostrará la disponibilidad en una pagina web. 
