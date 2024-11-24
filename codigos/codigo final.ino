@@ -4,27 +4,24 @@
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 
-// Configuración del LCD y Servo
+// Configuración de LCD y Servo
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 Servo myservo;
 
-// Cambiar las definiciones de pines para el ESP8266
-int IR1 = 12;  // GPIO5 (D6 en NodeMCU)
-int IR2 = 13;  // GPIO4 (D7 en NodeMCU)
-int servo= 14; //D5 servomotor
-int Slot = 4; // Número total de espacios de estacionamiento
-int flag1 = 0;
-int flag2 = 0;
+// Pines del ESP8266
+int IR1 = 12;  // Entrada
+int IR2 = 13;  // Salida
+int servo= 14; // Servo para la barrera
+int Slot = 4; // Total de espacios disponibles
 
-// Configuración de WiFi y MQTT
-const char* ssid = "danielr"; // Nombre de tu red WiFi
-const char* password = "polo978*"; // Contraseña de tu red WiFi
+// Configuración WiFi y MQTT
+const char* ssid = "danielr";
+const char* password = "polo978*";
+const char* mqtt_server = "test.mosquitto.org";
 
-const char* mqtt_server = "test.mosquitto.org"; // Dirección de tu broker MQTT
 WiFiClient espClient;
 PubSubClient client(espClient);
 
-// Función para conectar al WiFi
 void setup_wifi() {
   Serial.print("Conectando a WiFi...");
   WiFi.begin(ssid, password);
@@ -32,18 +29,14 @@ void setup_wifi() {
     delay(1000);
     Serial.print(".");
   }
-  Serial.println("Conectado al WiFi");
+  Serial.println("Conectado a WiFi");
 }
 
-// Función para reconectar al servidor MQTT
 void reconnect() {
   while (!client.connected()) {
-    Serial.print("Intentando conectar al servidor MQTT...");
     if (client.connect("ESP8266_ParkingClient")) {
-      Serial.println("Conectado al servidor MQTT");
-      client.subscribe("estacionamiento/status"); // Puedes suscribirte a algún tema si es necesario
+      client.subscribe("estacionamiento/status");
     } else {
-      Serial.print("Error de conexión, reintentando en 5 segundos...");
       delay(5000);
     }
   }
@@ -57,66 +50,49 @@ void setup() {
   pinMode(IR2, INPUT);
   myservo.attach(servo);
   myservo.write(100);
-
-  // Configuración de WiFi y MQTT
+  
   setup_wifi();
-  client.setServer(mqtt_server, 1883); // Puerto por defecto de MQTT es 1883
+  client.setServer(mqtt_server, 1883);
   
   // Pantalla de bienvenida
   lcd.setCursor(0, 0);
-  lcd.print("     DJ    ");
+  lcd.print("   Estacionamiento  ");
   lcd.setCursor(0, 1);
-  lcd.print(" PARKING IOT ");
+  lcd.print("   IOT Sistema     ");
   delay(2000);
   lcd.clear();
 }
 
 void loop() {
   if (!client.connected()) {
-    reconnect(); // Reconectar si la conexión se pierde
+    reconnect();
   }
-  client.loop(); // Mantener la conexión MQTT activa
+  client.loop();
 
-  // Verificar si un vehículo entra o sale
-  if (digitalRead(IR1) == LOW && flag1 == 0) {
+  if (digitalRead(IR1) == LOW) {
     if (Slot > 0) {
-      flag1 = 1;
-      if (flag2 == 0) {
-        myservo.write(0); // Abre la barrera
-        Slot = Slot - 1; // Reducir espacios disponibles
-        client.publish("estacionamiento/entrada", String(Slot).c_str()); // Enviar el estado actual a MQTT
-      }
+      Slot--;
+      myservo.write(0);  // Abre la barrera
+      client.publish("estacionamiento/entrada", String(Slot).c_str()); // Publica el nuevo estado
     } else {
       lcd.setCursor(0, 0);
-      lcd.print(" Estacionamientos ");
+      lcd.print("Estacionamientos");
       lcd.setCursor(0, 1);
-      lcd.print("  Llenos  ");
+      lcd.print(" Llenos");
       delay(3000);
       lcd.clear();
     }
   }
 
-  if (digitalRead(IR2) == LOW && flag2 == 0) {
-    flag2 = 1;
-    if (flag1 == 0) {
-      myservo.write(0); // Abre la barrera
-      Slot = Slot + 1; // Incrementar espacios disponibles
-      client.publish("estacionamiento/salida", String(Slot).c_str()); // Enviar el estado actual a MQTT
-    }
-  }
-
-  if (flag1 == 1 && flag2 == 1) {
-    delay(1000);
-    myservo.write(100); // Cierra la barrera
-    flag1 = 0;
-    flag2 = 0;
+  if (digitalRead(IR2) == LOW) {
+    Slot++;
+    myservo.write(0); // Abre la barrera
+    client.publish("estacionamiento/salida", String(Slot).c_str()); // Publica el nuevo estado
   }
 
   // Mostrar el número de espacios disponibles en el LCD
   lcd.setCursor(0, 0);
-  lcd.print("    BIENVENIDO!    ");
-  lcd.setCursor(0, 1);
-  lcd.print("Disponibles: ");
+  lcd.print("Disponible: ");
   lcd.print(Slot);
-  delay(500);
+  delay(1000);
 }
